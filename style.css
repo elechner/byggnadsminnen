@@ -1,0 +1,18 @@
+#map {
+    height: 1000px;
+    width: 1200px;
+}
+
+.gm-style-iw * {
+    display: block;
+    width: 100%;
+}
+
+.gm-style-iw h4, .gm-style-iw p {
+    margin: 0;
+    padding: 0;
+}
+
+.gm-style-iw a {
+    color: #4272db;
+}
