@@ -52,7 +52,7 @@
 
             currentMarkerIndex = (currentMarkerIndex + direction + selectedMarkers.length) % selectedMarkers.length;
 
-            placeDataElement.innerHTML = `</br></br>
+            placeDataElement.innerHTML = `
   <button id="prevButton" onclick="browseMarkers(-1)">Föregående</button>
   <button id="nextButton" onclick="browseMarkers(1)">Nästa</button>
     <h2>${selectedMarkers[currentMarkerIndex].title}</h2></br>
@@ -247,7 +247,7 @@
 
 
                             placeDataElement.innerHTML = `
-                           </br></br></br>
+                           </br>
                             <h2>${marker.title}</h2></br>
                             <img src="https://commons.wikimedia.org/w/thumb.php?f=${marker.image}&w=400" alt="${marker.title}"></br>
                             <table class="info-table">
