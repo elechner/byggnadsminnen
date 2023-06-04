@@ -2,26 +2,29 @@
 <html>
 
 <head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans:400,700&display=swap">
     <link rel="stylesheet" href="style.css">
     <title>Byggnadsminnen i Västernorrlands län</title>
 </head>
 
 <body>
-    <h1>Byggnadsminnen i Västernorrlands län</h1>
-    <div id="map">&nbsp;</div>
+    <div class="centered"><h1>Byggnadsminnen i Västernorrlands län</h1></div>
+    <div class="centered" id="placeData">
+    </div>
+    <div id="map"></div>
     <script type="text/javascript">
 
         //Files
         const MAP_STYLES = "mapStyles.json";
         const PLACE_DATA = "byggnadsminnen.json"; //Source: Wikipedia CC BY-SA 3.0 https://sv.wikipedia.org/wiki/Lista_%C3%B6ver_byggnadsminnen_i_V%C3%A4sternorrlands_l%C3%A4n
         const EXCLUDING_OVERLAY = "yLanInverted.geojson" //Source: Lantmäteriet Open Data ( https://www.lantmateriet.se/en/geodata/geodata-products/open-data/ ). Edited in qGIS
-        
+
         //Geography. Maximum points of Västernorrland County. 
         const WEST_LONGITUDE = 14.7810925;
         const EAST_LONGITUDE = 19.3144485;
         const SOUTH_LATITUDE = 62.1176224;
         const NORTH_LATITUDE = 64.0274754;
-        
+
         // GUI settings
         const MARKER_COLOR = "#00AAFF"
         const SELECTED_COLOR = "#FF00AA"
@@ -30,7 +33,7 @@
         const LABEL_COLOR = "rgba(255, 255, 255, 0.7)"
         const LABEL_SIZE = "18px"
         const LABEL_WEIGHT = "600";
-        
+
         // Variables for managing markers and clusters
         let selectedMarker = null;
         const markers = [];
@@ -38,9 +41,52 @@
         let selectedClusterMarker = null;
         let selectedClusterMarkers = [];
         let clusterMixed = null;
-        
+
         //HTML DOM elements
         const mapElement = document.getElementById("map");
+        const placeDataElement = document.getElementById("placeData");
+        let currentMarkerIndex = 0;
+
+
+        function browseMarkers(direction) {
+
+            currentMarkerIndex = (currentMarkerIndex + direction + selectedMarkers.length) % selectedMarkers.length;
+
+            placeDataElement.innerHTML = `</br></br></br></br>
+  <button id="prevButton" onclick="browseMarkers(-1)">Föregående</button>
+  <button id="nextButton" onclick="browseMarkers(1)">Nästa</button>
+    <h2>${selectedMarkers[currentMarkerIndex].title}</h2></br>
+    <img src="https://commons.wikimedia.org/w/thumb.php?f=${selectedMarkers[currentMarkerIndex].image}&w=400" alt="${selectedMarkers[currentMarkerIndex].title}"></br>
+    <table class="info-table">
+    <tbody>
+      <tr>
+        <td><b>Funktion:</b></td>
+        <td>${selectedMarkers[currentMarkerIndex].function}</td>
+      </tr>
+      <tr>
+        <td><b>Byggår:</b></td>
+        <td>${selectedMarkers[currentMarkerIndex].year}</td>
+      </tr>
+      <tr>
+        <td><b>Arkitekt:</b></td>
+        <td>${selectedMarkers[currentMarkerIndex].architect}</td>
+      </tr>
+      <tr>
+        <td><b>Plats:</b></td>
+        <td>${selectedMarkers[currentMarkerIndex].location}</td>
+      </tr>
+      <tr>
+        <td><b>Kommun:</b></td>
+        <td>${selectedMarkers[currentMarkerIndex].municipality}</td>
+      </tr>
+    </tbody>
+  </table>
+`;
+
+
+
+        }
+
 
         function initMap() {
             fetch(MAP_STYLES).then(response => {
@@ -78,7 +124,7 @@
                     styles: styleData
                 }
                 const map = new google.maps.Map(mapElement, mapOptions);
-        
+
                 // Excluding overlay
                 map.data.loadGeoJson(EXCLUDING_OVERLAY);
                 // Overlay style            
@@ -91,11 +137,12 @@
                     //Border color. Obsolete as we want water to be the border and has set weight to 0.  
                     strokeColor: "#0000FF"
                 });
-        
+
                 fetch(PLACE_DATA).then(response => {
                     return response.json();
                 }).then(data => {
-                 
+
+
                     // Function to create a marker icon with specified fill color
                     function createMarkerIcon(fillColor) {
                         return {
@@ -109,12 +156,12 @@
                             labelOrigin: new google.maps.Point(0, 8)
                         };
                     }
-                 
+
                     // Create marker icons with different colors
                     const markerIcon = createMarkerIcon(MARKER_COLOR);
                     const markerIconSelected = createMarkerIcon(SELECTED_COLOR);
                     const markerIconHover = createMarkerIcon(HOVER_COLOR);
-                 
+
                     // Function to create an SVG image with a gradient
                     function createSVGWithGradient(stopColor1, stopColor2) {
                         return window.btoa(`
@@ -132,7 +179,7 @@
 				</svg>
     `);
                     }
-                  
+
                     // Function to create a cluster icon with a gradient
                     function createClusterIcon(svgData) {
                         return {
@@ -140,13 +187,13 @@
                             scaledSize: new google.maps.Size(50, 50),
                         };
                     }
-                  
+
                     // Create cluster icons with different gradients. Same colors result in solid cluster icon. 
                     const clusterIcon = createClusterIcon(createSVGWithGradient(MARKER_COLOR, MARKER_COLOR));
                     const clusterIconSelected = createClusterIcon(createSVGWithGradient(SELECTED_COLOR, SELECTED_COLOR));
                     const clusterIconHover = createClusterIcon(createSVGWithGradient(HOVER_COLOR, HOVER_COLOR));
                     const clusterIconMixed = createClusterIcon(createSVGWithGradient(MARKER_COLOR, SELECTED_COLOR));
-                  
+
                     // Function to reset marker and cluster icons to their default states
                     function resetMarkers() {
                         if (selectedMarker) {
@@ -162,7 +209,7 @@
                         selectedClusterMarkers.forEach(marker => marker.setIcon(clusterIcon));
                         selectedClusterMarkers = [];
                     }
-                  
+
                     // Loop through the data and create markers for each place The first letter of the name is set as label. 
                     data.places.forEach(function (place) {
                         const myLatLng = {
@@ -180,8 +227,16 @@
                             map,
                             title: place.namn,
                             icon: markerIcon,
+                            // custom data: 
+                            function: place.funktion,
+                            year: place.byggår,
+                            architect: place.arkitekt,
+                            location: place.plats,
+                            municipality: place.kommun,
+                            bbr: place.bbr,
+                            image: place.bild
                         });
-                      
+
                         // Event listeners for marker interactions
                         google.maps.event.addListener(marker, "click", function () {
                             if (this != selectedMarker) {
@@ -189,6 +244,40 @@
                                 selectedMarker = this;
                             }
                             this.setIcon(markerIconSelected);
+
+
+                            placeDataElement.innerHTML = `
+                            </br></br></br></br></br>
+                            <h2>${marker.title}</h2></br>
+                            <img src="https://commons.wikimedia.org/w/thumb.php?f=${marker.image}&w=400" alt="${marker.title}"></br>
+                            <table class="info-table">
+    <tbody>
+      <tr>
+        <td><b>Funktion:</b></td>
+        <td>${marker.function}</td>
+      </tr>
+      <tr>
+        <td><b>Byggår:</b></td>
+        <td>${marker.year}</td>
+      </tr>
+      <tr>
+        <td><b>Arkitekt:</b></td>
+        <td>${marker.architect}</td>
+      </tr>
+      <tr>
+        <td><b>Plats:</b></td>
+        <td>${marker.location}</td>
+      </tr>
+      <tr>
+        <td><b>Kommun:</b></td>
+        <td>${marker.municipality}</td>
+      </tr>
+    </tbody>
+  </table>
+                            `;
+
+
+
                         });
                         google.maps.event.addListener(marker, "mouseover", function () {
                             this.setIcon(markerIconHover);
@@ -200,11 +289,11 @@
                                 this.setIcon(markerIcon);
                             }
                         });
-                    
+
                         markers.push(marker);
-                    
+
                     });
-                    
+
                     // Function to handle click event on a cluster
                     function onClusterClick(e, cluster, map) {
                         resetMarkers()
@@ -214,6 +303,8 @@
                         });
                         map.setZoom(map.getZoom() + 1);           // Change zoom level by 1
                         map.panTo(cluster.position);              // Center the map on the cluster. panTo for smoother animation compared to setCenter. 
+
+                        browseMarkers(0);
                     }
 
                     // Renderer object for cluster marker rendering
@@ -264,14 +355,14 @@
                         }
                     };
 
-                   
+
                     const algorithm = new markerClusterer.GridAlgorithm({
                         gridSize: 40  //This is default
                     });
 
                     // Alternative cluster algorithm. I'm not super happy about positioning of the SuperCluster:  
                     //  let algorithm = new markerClusterer.SuperClusterAlgorithm({ radius: 80});
-                    
+
                     const markerCluster = new markerClusterer.MarkerClusterer({
                         map: map,
                         markers: markers,
@@ -279,7 +370,7 @@
                         algorithm: algorithm,
                         onClusterClick: onClusterClick
                     });
-                    
+
                     // Function to set the cluster icon based on if all child markers are selected, only some or none. 
                     function setClusterIcon(cluster) {
                         if (cluster.markers.length > selectedMarkers.length) {
@@ -289,7 +380,7 @@
                             cluster.marker.setIcon(clusterIconSelected);
                         }
                     }
-                    
+
                     //Event listener for end of clustering. 
                     google.maps.event.addListener(markerCluster, "clusteringend", function () {
                         this.clusters.forEach(cluster => {
@@ -303,11 +394,16 @@
                             }
                         });
                     });
-                
+
+
+
+
+
+
                 }).catch(error => {
                     console.log("Error loading place data:", error);
                 });
-            
+
             }).catch(error => {
                 console.log("Error loading style data:", error);
             });
@@ -315,7 +411,8 @@
     </script>
 
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZ7_EhLr6NijAtOFSN2HW8OSZBHpnb0lM&region=SE&language=sv&callback=initMap"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCZ7_EhLr6NijAtOFSN2HW8OSZBHpnb0lM&region=SE&language=sv&callback=initMap"></script>
 
 </body>
 

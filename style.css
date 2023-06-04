@@ -1,6 +1,38 @@
+body {
+    font-family: 'Noto Sans', sans-serif;
+  }
+
+ 
+.centered {
+    margin: auto;
+    text-align: center;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .info-table {
+    margin: 0 auto;
+    border-collapse: collapse;
+  }
+
+  .info-table td {
+    text-align: left; 
+  }
+
+#placeData {
+    float: left;
+    width: 30%;
+}
+
+
 #map {
+    float: right;
     height: 1000px;
-    width: 1200px;
+    width: 70%;
 }
 
 .gm-style-iw * {
