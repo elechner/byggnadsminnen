@@ -8,7 +8,9 @@
 </head>
 
 <body>
-    <div class="centered"><h1>Byggnadsminnen i Västernorrlands län</h1></div>
+    <div class="centered">
+        <h1>Byggnadsminnen i Västernorrlands län</h1>
+    </div>
     <div class="centered" id="placeData">
     </div>
     <div id="map"></div>
@@ -40,7 +42,10 @@
         let selectedMarkers = [];
         let selectedClusterMarker = null;
         let selectedClusterMarkers = [];
+        let selectedClusters = [];
         let clusterMixed = null;
+        let viewedMarker = null;
+        let viewedCluster = null;
 
         //HTML DOM elements
         const mapElement = document.getElementById("map");
@@ -51,7 +56,6 @@
         function browseMarkers(direction) {
 
             currentMarkerIndex = (currentMarkerIndex + direction + selectedMarkers.length) % selectedMarkers.length;
-
             placeDataElement.innerHTML = `
   <button id="prevButton" onclick="browseMarkers(-1)">Föregående</button>
   <button id="nextButton" onclick="browseMarkers(1)">Nästa</button>
@@ -147,7 +151,7 @@
                     function createMarkerIcon(fillColor) {
                         return {
                             path: "M 0 0 q 2.906 0 4.945 2.039 t 2.039 4.945 q 0 1.453 -0.727 3.328 t -1.758 3.516 t -2.039 3.07 t -1.711 2.273 l -0.75 0.797 q -0.281 -0.328 -0.75 -0.867 t -1.688 -2.156 t -2.133 -3.141 t -1.664 -3.445 t -0.75 -3.375 q 0 -2.906 2.039 -4.945 t 4.945 -2.039 z", // Source of marker path: Google
-                            fillColor: fillColor,
+                            fillColor,
                             fillOpacity: MARKER_OPACITY,
                             strokeWeight: 0,
                             rotation: 0,
@@ -193,6 +197,54 @@
                     const clusterIconSelected = createClusterIcon(createSVGWithGradient(SELECTED_COLOR, SELECTED_COLOR));
                     const clusterIconHover = createClusterIcon(createSVGWithGradient(HOVER_COLOR, HOVER_COLOR));
                     const clusterIconMixed = createClusterIcon(createSVGWithGradient(MARKER_COLOR, SELECTED_COLOR));
+
+
+
+                    const observer = new MutationObserver(function (mutations) {
+                        mutations.forEach(function (mutation) {
+                            if (mutation.type === 'childList' || mutation.type === 'characterData') {
+
+                                if (selectedMarkers.length != 0) {
+                                    selectedMarkers.forEach(marker => marker.setIcon(markerIconSelected));
+                                    selectedMarkers[currentMarkerIndex].setIcon(markerIconHover);
+                                    viewedMarker = selectedMarkers[currentMarkerIndex];
+                                    console.log(viewedMarker);
+
+                                    selectedClusters.forEach(function (cluster) {
+                                        if (cluster.markers.length > 1) {
+                                            cluster.markers.forEach(function (marker) {
+
+                                                if (cluster.markers.includes(selectedMarkers[currentMarkerIndex])) {
+                                                    cluster.marker.setIcon(clusterIconHover);
+                                                    viewedCluster = cluster.marker;
+                                                }
+                                                else {
+                                                    cluster.marker.setIcon(clusterIconSelected);
+                                                }
+
+                                            });
+                                        }
+                                    });
+
+
+
+
+                                }
+
+
+                            }
+                        });
+                    });
+
+                    // Define the options for the MutationObserver
+                    const observerOptions = {
+                        childList: true,
+                        subtree: true,
+                        characterData: true,
+                    };
+
+                    observer.observe(placeDataElement, observerOptions);
+
 
                     // Function to reset marker and cluster icons to their default states
                     function resetMarkers() {
@@ -283,10 +335,17 @@
                             this.setIcon(markerIconHover);
                         });
                         google.maps.event.addListener(marker, "mouseout", function () {
-                            if (this === selectedMarker || selectedMarkers.includes(this)) {
+
+
+                            if (this === viewedMarker) {
+                                this.setIcon(markerIconHover);
+                            }
+                            else if (this === selectedMarker || selectedMarkers.includes(this)) {
                                 this.setIcon(markerIconSelected);
-                            } else {
+                            }
+                            else {
                                 this.setIcon(markerIcon);
+
                             }
                         });
 
@@ -341,7 +400,11 @@
 
                             google.maps.event.addListener(marker, "mouseout", function () {
                                 if (selectedClusterMarker == this || selectedClusterMarkers.includes(this)) {
-                                    if (this == clusterMixed) {
+                                    if (this == viewedCluster) {
+                                        this.setIcon(clusterIconHover);
+
+                                    }
+                                    else if (this == clusterMixed) {
                                         this.setIcon(clusterIconMixed);
                                     } else {
                                         this.setIcon(clusterIconSelected);
@@ -373,20 +436,35 @@
 
                     // Function to set the cluster icon based on if all child markers are selected, only some or none. 
                     function setClusterIcon(cluster) {
+
                         if (cluster.markers.length > selectedMarkers.length) {
                             cluster.marker.setIcon(clusterIconMixed);
                             clusterMixed = cluster.marker;
-                        } else {
+                        }
+                        else if (cluster.marker === viewedCluster) {
+                            cluster.marker.setIcon(clusterIconHover);
+                        }
+
+                        else {
                             cluster.marker.setIcon(clusterIconSelected);
                         }
                     }
 
                     //Event listener for end of clustering. 
                     google.maps.event.addListener(markerCluster, "clusteringend", function () {
-                        this.clusters.forEach(cluster => {
+                        selectedClusters = [];
+                        this.clusters.forEach(function (cluster) {
+
+
+
                             if (cluster.markers.length > 1) {
+                                if (cluster.markers.includes(viewedMarker)) {
+                                    viewedCluster = cluster.marker;
+                                }
+
                                 cluster.markers.forEach(marker => {
                                     if (selectedMarkers.includes(marker) || marker === selectedMarker) {
+                                        selectedClusters.push(cluster);
                                         selectedClusterMarkers.push(cluster.marker);
                                         setClusterIcon(cluster);
                                     }
