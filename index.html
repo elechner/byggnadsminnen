@@ -400,13 +400,15 @@
 
                             google.maps.event.addListener(marker, "mouseout", function () {
                                 if (selectedClusterMarker == this || selectedClusterMarkers.includes(this)) {
-                                    if (this == viewedCluster) {
+
+                                    if (this == clusterMixed) {
+                                        this.setIcon(clusterIconMixed);
+                                    }
+                                    else if (this == viewedCluster) {
                                         this.setIcon(clusterIconHover);
 
                                     }
-                                    else if (this == clusterMixed) {
-                                        this.setIcon(clusterIconMixed);
-                                    } else {
+                                    else {
                                         this.setIcon(clusterIconSelected);
                                     }
                                 } else {
