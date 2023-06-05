@@ -208,20 +208,24 @@
                                     selectedMarkers.forEach(marker => marker.setIcon(markerIconSelected));
                                     selectedMarkers[currentMarkerIndex].setIcon(markerIconHover);
                                     viewedMarker = selectedMarkers[currentMarkerIndex];
-                                    console.log(viewedMarker);
-
+     
                                     selectedClusters.forEach(function (cluster) {
                                         if (cluster.markers.length > 1) {
                                             cluster.markers.forEach(function (marker) {
-
                                                 if (cluster.markers.includes(selectedMarkers[currentMarkerIndex])) {
+                                                        
+                                                    if (cluster.markers.length > selectedMarkers.length) {
+                                                       cluster.marker.setIcon(clusterIconMixed);
+                                                       clusterMixed = cluster.marker;
+                                                 }
+                                                else {
                                                     cluster.marker.setIcon(clusterIconHover);
-                                                    viewedCluster = cluster.marker;
+                                                }
                                                 }
                                                 else {
+
                                                     cluster.marker.setIcon(clusterIconSelected);
                                                 }
-
                                             });
                                         }
                                     });
@@ -400,10 +404,10 @@
 
                             google.maps.event.addListener(marker, "mouseout", function () {
                                 if (selectedClusterMarker == this || selectedClusterMarkers.includes(this)) {
-
+                                    
                                     if (this == clusterMixed) {
                                         this.setIcon(clusterIconMixed);
-                                    }
+                                    } 
                                     else if (this == viewedCluster) {
                                         this.setIcon(clusterIconHover);
 
