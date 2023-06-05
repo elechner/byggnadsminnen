@@ -2,4 +2,4 @@
 Demo of Google Maps API
 
 Preview: 
-https://rawcdn.githack.com/elechner/byggnadsminnen/0af86ae5c9de9fdc14748553593c45009d24d4c2/
+https://rawcdn.githack.com/elechner/byggnadsminnen/a7f7f2443380aada4c21a9f1ca409713bce9dc69/
